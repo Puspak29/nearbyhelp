@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const sendResponse = require('./utils/sendResponse');
 
 const app = express();
 
@@ -8,19 +9,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {
-    res.status(200).json({
-        success: true,
-        message: 'NearbyHelp API is running'
-    });
+    return sendResponse(res, 200, true, 'NearbyHelp API is running');
 });
 
 app.use('/api/auth', require('./routes/auth.routes'));
+app.use('/api/user', require('./routes/user.routes'));
 
 app.use((req, res) => {
-    res.status(404).json({
-        success: false,
-        message: 'Endpoint not found'
-    });
+    return sendResponse(res, 404, false, 'Route not found');
 })
 
 module.exports = app;

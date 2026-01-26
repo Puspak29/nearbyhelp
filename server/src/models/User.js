@@ -28,7 +28,8 @@ const userSchema = new mongoose.Schema({
         type: {
             type: String,
             enum: ['Point'],
-            default: 'Point'
+            default: 'Point',
+            required: true
         },
         coordinates: {
             type: [Number], // [longitude, latitude]
@@ -47,6 +48,22 @@ const userSchema = new mongoose.Schema({
     avatarUrl: {
         type: String,
         default: ''
+    },
+    about: {
+        type: String,
+        trim: true,
+        default: ''
+    },
+    averageRating: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 5
+    },
+    ratingsCount: {
+        type: Number,
+        default: 0,
+        min: 0
     }
 },{
     timestamps: true

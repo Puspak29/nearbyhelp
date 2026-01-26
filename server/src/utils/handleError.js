@@ -1,12 +1,15 @@
 const sendResponse = require('./sendResponse');
 
-const handleError = (fn, errorMessage) => {
-    return async (req, res) => {
+const handleError = (fn, errorMessage = 'Something went wrong') => {
+    return async (req, res, next) => {
         try {
-            await fn(req, res);
+            await fn(req, res, next);
         }
         catch(error) {
-            return sendResponse(res, 500, false, errorMessage);
+            console.error('Error:', error);
+            const message = error.text || errorMessage;
+            const statusCode = error.code || 500;
+            return sendResponse(res, statusCode, false, message);
         }
     }
 }

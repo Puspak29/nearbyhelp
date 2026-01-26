@@ -5,7 +5,7 @@ const sendResponse = require('../utils/sendResponse');
 const { generateToken } = require('../utils/jwt');
 
 exports.signup = handleError(async (req, res) => {
-    const { name, email, password } = req.body;
+    const { name, email, password, longitude, latitude } = req.body;
 
     const existingUser = await User.findOne({ email });
     if(existingUser){
@@ -14,7 +14,11 @@ exports.signup = handleError(async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     await User.create({
-        name, email, password: hashedPassword 
+        name, email, password: hashedPassword,
+        location: {
+            type: 'Point',
+            coordinates: [longitude, latitude]
+        }
     });
 
     return sendResponse(res, 201, true, 'User registered successfully');
@@ -36,5 +40,5 @@ exports.login = handleError(async (req, res) => {
     const token = generateToken(user._id, user.email);
 
     return sendResponse(res, 200, true, 'Login successful', { token });
-    
+
 }, 'Error occurred during login');

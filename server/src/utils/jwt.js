@@ -10,5 +10,11 @@ exports.generateToken = (id, email) => {
 }
 
 exports.verifyToken = (token) => {
-    return jwt.verify(token, JWT_SECRET);
+    try{
+        return jwt.verify(token, JWT_SECRET);
+    }
+    catch(error){
+        throw { text: 'Invalid or expired token', code: 401 };
+    }
+    
 }
