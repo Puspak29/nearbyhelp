@@ -37,7 +37,7 @@ exports.login = handleError(async (req, res) => {
         return sendResponse(res, 401, false, 'Invalid credentials');
     }
 
-    const token = generateToken(user._id, user.email);
+    const token = generateToken({ id: user._id });
 
     return sendResponse(res, 200, true, 'Login successful', { token });
 

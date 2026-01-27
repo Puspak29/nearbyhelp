@@ -14,6 +14,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/user', require('./routes/user.routes'));
+app.use('/api/posts', require('./routes/helpPost.routes'));
 
 app.use((req, res) => {
     return sendResponse(res, 404, false, 'Route not found');
