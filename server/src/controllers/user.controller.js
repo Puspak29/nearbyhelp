@@ -3,12 +3,7 @@ const handleError = require("../utils/handleError");
 const sendResponse = require("../utils/sendResponse");
 
 exports.createProfile = handleError( async (req, res) => {
-    const userId = req.user.id;
-    const user = await User.findById(userId);
-    if(!user){
-        return sendResponse(res, 404, false, 'User not found');
-    }
-
+    const user=req.user;
     const { skills, role, avatarUrl, about } = req.body;
     user.skills = skills || user.skills;
     user.role = role || user.role;
@@ -26,10 +21,6 @@ exports.createProfile = handleError( async (req, res) => {
 }, 'Error occurred while creating profile');
 
 exports.getProfile = handleError(async (req, res) => {
-    const userId = req.user.id;
-    const user = await User.findById(userId).select('-password');
-    if(!user){
-        return sendResponse(res, 404, false, 'User not found');
-    }
+    const user = req.user;
     return sendResponse(res, 200, true, 'Profile fetched successfully', { user });
 }, 'Error occurred while fetching profile');
