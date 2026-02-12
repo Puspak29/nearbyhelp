@@ -14,4 +14,17 @@ router.post(
     }),
     helpPostController.createHelpPost);
 
+router.get('/', authMiddleware.authenticate, helpPostController.getAllHelpPosts);
+
+router.post(
+    '/:postId/apply',
+    authMiddleware.authenticate,
+    authMiddleware.authorizePostType({
+        requester: ['request'],
+        helper: ['offer'],
+        both: ['request', 'offer']
+        // admin: ['*']
+    }),
+    helpPostController.applyToHelpPost);
+
 module.exports = router;
