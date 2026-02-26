@@ -69,7 +69,7 @@ exports.getAllHelpPosts = handleError( async(req, res) => {
 
     const skip = (page - 1) * limit;
     const posts = await HelpPost.find(filter)
-                    .populate('user', 'name email')
+                    .populate('user', 'name username')
                     .sort({ createdAt: -1 })
                     .skip(skip)
                     .limit(Number(limit));
@@ -85,3 +85,112 @@ exports.getAllHelpPosts = handleError( async(req, res) => {
         }
     });
 }, 'Error occurred while fetching posts');
+
+exports.viewHelpPostDetails = handleError( async(req, res) => {
+    const { postId } = req.params;
+
+    const post = await HelpPost.findById(postId)
+                    .populate('user', 'name username');
+    
+    if(!post){
+        return sendResponse(res, 404, false, 'Help post not found');
+    }
+
+    const data = {
+        ...post.toObject(),
+        applicationCount: post.applications.length,
+    }
+
+    return sendResponse(res, 200, true, 'Post details fetched successfully', { data });
+}, 'Error occured while fetching post details');
+
+exports.processApplication = handleError( async(req, res) => {
+    const { postId, applicantId } = req.params;
+    const { action } = req.body; // 'in-review', 'selected' or 'rejected'
+    const user = req.user;
+
+    if (!['in-review', 'selected', 'rejected'].includes(action)) {
+        return sendResponse(res, 400, false, "Invalid action");
+    }
+
+    const post = await HelpPost.findById(postId);
+    if(!post){
+        return sendResponse(res, 404, false, 'Help post not found');
+    }
+    if(post.user.toString() !== user._id.toString()){
+        return sendResponse(res, 403, false, 'Only post creator can process applications');
+    }
+    if(post.status !== 'open'){
+        return sendResponse(res, 400, false, 'Cannot process applications for closed post');
+    }
+
+    const application = post.applications.find(app => app.user.toString() === applicantId);
+    if(!application){
+        return sendResponse(res, 404, false, 'Application not found');
+    }
+
+    if(application.status === 'selected' || application.status === 'rejected'){
+        return sendResponse(res, 400, false, 'Application already processed');
+    }
+
+    application.status = action;
+    if(post.status === 'open'){
+        post.status = 'in-progress';
+    }
+    await post.save();
+
+    return sendResponse(res, 200, true, `Application ${action} successfully`);
+
+}, 'Error occurred while accepting/rejecting application');
+
+exports.getAllApplicantsForPost = handleError( async(req, res) => {
+    const { postId } = req.params;
+    const user = req.user;
+    const post = await HelpPost.findById(postId).populate('applications.user', 'name username');
+    if(!post){
+        return sendResponse(res, 404, false, 'Help post not found');
+    }
+    if(post.user.toString() !== user._id.toString()){
+        return sendResponse(res, 403, false, 'Only post creator can view applicants');
+    }
+
+    const applicants = post.applications.map(app => ({
+        user: app.user,
+        status: app.status,
+        appliedAt: app.createdAt
+    }));
+
+    return sendResponse(res, 200, true, 'Applicants retrieved successfully', { applicants });
+}, 'Error occurred while fetching applicants for post');
+
+exports.updateStatus = handleError( async(req, res) => {
+    const { postId } = req.params;
+    const { status } = req.body;
+    const user = req.user;
+
+    if(!['in-progress', 'completed', 'cancelled'].includes(status)) {
+        return sendResponse(res, 400, false, "Invalid status");
+    }
+
+    const post = await HelpPost.findById(postId);
+    if(!post){
+        return sendResponse(res, 404, false, 'Help post not found');
+    }
+    if(post.user.toString() !== user._id.toString()){
+        return sendResponse(res, 403, false, 'Only post creator can update status');
+    }
+
+    if(post.status === 'completed' || post.status === 'cancelled'){
+        return sendResponse(res, 400, false, 'Cannot update status of completed/cancelled post');
+    }
+    post.status = status;
+    if(status === 'completed'){
+        post.completedAt = new Date();
+    }
+    else if(status === 'cancelled'){
+        post.cancelledAt = new Date();
+    }
+    await post.save();
+
+    return sendResponse(res, 200, true, 'Post status updated successfully');
+}, 'Error occurred while updating post status');

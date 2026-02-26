@@ -27,4 +27,9 @@ router.post(
     }),
     helpPostController.applyToHelpPost);
 
+router.get('/:postId', authMiddleware.authenticate, helpPostController.viewHelpPostDetails);
+router.get('/:postId/applications', authMiddleware.authenticate, helpPostController.getAllApplicantsForPost);
+router.patch('/:postId/status', authMiddleware.authenticate, helpPostController.updateStatus);
+router.patch('/:postId/applications/:applicantId', authMiddleware.authenticate, helpPostController.processApplication);
+
 module.exports = router;
